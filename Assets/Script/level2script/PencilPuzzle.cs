@@ -14,6 +14,9 @@ public class PencilPuzzle : MonoBehaviour
     public float winRotationTolerance = 2f; // Degrees
     public float padding = 50f; // Padding from playArea edges
     
+    [Header("Snap Configuration")]
+    public Transform snapAreaContainer; // Parent of the snap targets
+    
     private List<PencilMovement> pencils = new List<PencilMovement>();
 
     void Start()
@@ -21,9 +24,48 @@ public class PencilPuzzle : MonoBehaviour
         // Auto-find pencils if not assigned
         pencils = new List<PencilMovement>(GetComponentsInChildren<PencilMovement>());
         
+        // Auto-assign snap targets
+        if (snapAreaContainer != null)
+        {
+            AssignSnapTargets();
+        }
+        else
+        {
+            // Try to find it by name if not assigned
+            GameObject snapObj = GameObject.Find("snaparea");
+            if (snapObj != null)
+            {
+                snapAreaContainer = snapObj.transform;
+                AssignSnapTargets();
+            }
+        }
+        
         if (pencils.Count > 0)
         {
             RandomizePencils();
+        }
+    }
+    
+    void AssignSnapTargets()
+    {
+        // Assumption: Snap Targets are children of snapAreaContainer
+        // And they are ordered 1 to 6 (left to right) matching IDs or just order?
+        // Let's assume name matching 'pen1' -> 'pen1' OR order matching.
+        // User screenshot showed 'pen1' inside 'snaparea'.
+        
+        foreach (var pen in pencils)
+        {
+            // Try to find child with same name
+            Transform target = snapAreaContainer.Find(pen.name);
+            if (target != null)
+            {
+                pen.snapTarget = target.GetComponent<RectTransform>();
+            }
+            else
+            {
+                // Fallback: Try by index ?
+                // If pen names are 'pen1', 'pen2', etc. this should work.
+            }
         }
     }
 
@@ -119,17 +161,32 @@ public class PencilPuzzle : MonoBehaviour
 
     public void CheckWinCondition()
     {
-        // 1. Sort pencils list based on current X position
+        // 1. Check if ALL pencils are neatly snapped
+        bool allSnapped = true;
+        foreach (var pen in pencils)
+        {
+            if (!pen.isSnapped)
+            {
+                allSnapped = false;
+                break;
+            }
+        }
+
+        if (!allSnapped)
+        {
+            // Debug.Log("Still sorting... Pencils are not all snapped yet.");
+            return; 
+        }
+
+        // 2. Sort pencils list based on current X position to verify sequence
         List<PencilMovement> sortedPencils = pencils.OrderBy(p => p.GetComponent<RectTransform>().anchoredPosition.x).ToList();
         
-        // 2. Check Sequence (Descending: Big ID Left, Small ID Right)
-        // Example: 6, 5, 4, 3, 2, 1
+        // 3. Check Sequence (Descending: Big ID Left, Small ID Right)
         bool sequenceCorrect = true;
         int count = sortedPencils.Count;
         
         for (int i = 0; i < count; i++)
         {
-            // Expected ID = Count - i (e.g. at index 0, expect 6)
             if (sortedPencils[i].pencilId != (count - i))
             {
                 sequenceCorrect = false;
@@ -137,13 +194,11 @@ public class PencilPuzzle : MonoBehaviour
             }
         }
 
-        // 3. Check Rotations
+        // 4. Check Rotations (Snapped pencils should already be at 0, but extra safety check)
         bool rotationCorrect = true;
         foreach (var pen in sortedPencils)
         {
             float z = pen.GetComponent<RectTransform>().localEulerAngles.z;
-            
-            // Normalize z to -180...180 range for easier checking near 0
             if (z > 180) z -= 360;
             
             if (Mathf.Abs(z) > winRotationTolerance)
@@ -155,15 +210,10 @@ public class PencilPuzzle : MonoBehaviour
 
         if (sequenceCorrect && rotationCorrect)
         {
-            Debug.Log("WIN! All pencils sorted and upright.");
+            Debug.Log("WIN! All pencils are snapped, sorted, and upright.");
             if (winUI != null) winUI.SetActive(true);
             
-            // Optional: Disable interaction
             foreach(var p in pencils) p.enabled = false;
-        }
-        else
-        {
-            // Debug.Log($"Status - Seq: {sequenceCorrect}, Rot: {rotationCorrect}");
         }
     }
 }
