@@ -145,6 +145,8 @@ public class KeyboardKey : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
         {
             gameManager.CheckWin();
         }
+
+        FindObjectOfType<KeyboardScript>()?.PlayDropSFX();
     }
 
     // Mencari slot terdekat untuk visual feedback saat drag
@@ -224,5 +226,7 @@ public class KeyboardKey : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
             slot.occupiedKey = this;
             targetRotation = 0;
         }
+
+        FindObjectOfType<KeyboardScript>()?.PlaySnapSFX();
     }
 }

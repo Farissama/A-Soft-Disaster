@@ -237,6 +237,8 @@ public class AtkDraggable : MonoBehaviour, IBeginDragHandler, IDragHandler, IEnd
         {
             manager.CheckWinCondition();
         }
+
+        FindObjectOfType<AtkPuzzle>()?.PlayDropSFX();
     }
 
     private void FinalizeSnap()
