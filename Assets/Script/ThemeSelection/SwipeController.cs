@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 public class SwipeController : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
@@ -14,12 +15,16 @@ public class SwipeController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     [SerializeField] float tweenTime;
     [SerializeField] LeanTweenType tweenType;
     float dragThreshould;
+    [SerializeField] Button nextButton;
+    [SerializeField] Button prevButton;
 
     private void Awake()
     {
         currentPage = 1;
         targetPos = levelPageRect.localPosition;
         dragThreshould = Screen.width / 15;
+
+        UpdateButtonVisibility(); // ✅ penting
     }
     
     public void Next()
@@ -29,6 +34,7 @@ public class SwipeController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             currentPage++;
             targetPos += pageStep;
             MovePage();
+            UpdateButtonVisibility(); // ✅ tambah ini
         }
     }
 
@@ -39,6 +45,7 @@ public class SwipeController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             currentPage--;
             targetPos -= pageStep;
             MovePage();
+            UpdateButtonVisibility(); // ✅ tambah ini
         }
     }
 
@@ -69,5 +76,20 @@ public class SwipeController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         {
             MovePage();
         }
+    }
+
+    void UpdateButtonVisibility()
+    {
+    // Kalau di page pertama → Prev mati
+    if (currentPage <= 1)
+        prevButton.gameObject.SetActive(false);
+    else
+        prevButton.gameObject.SetActive(true);
+
+    // Kalau di page terakhir → Next mati
+    if (currentPage >= maxPage)
+        nextButton.gameObject.SetActive(false);
+    else
+        nextButton.gameObject.SetActive(true);
     }
 }

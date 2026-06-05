@@ -5,20 +5,28 @@ using UnityEngine;
 public class AtkPuzzle : MonoBehaviour
 {
     [Header("Configuration")]
-    public RectTransform safeArea; // Area dimana item boleh muncul/digerakkan
+    public RectTransform safeArea;
     public GameObject winUI;
     public List<AtkDraggable> allItems;
 
-    // Start is called before the first frame update
+    // 🔊 SFX (DITAMBAHKAN)
+    [SerializeField] private AudioClip dropSFX;
+    private AudioSource audioSource;
+
     void Start()
     {
-        // Otomatis cari semua item jika list belum diisi manual
+        // 🔊 INIT AUDIO (DITAMBAHKAN)
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null)
+        {
+            audioSource = gameObject.AddComponent<AudioSource>();
+        }
+
         if (allItems == null || allItems.Count == 0)
         {
             allItems = new List<AtkDraggable>(FindObjectsOfType<AtkDraggable>());
         }
 
-        // Initialize Items
         foreach (var item in allItems)
         {
             if (item != null)
@@ -30,10 +38,8 @@ public class AtkPuzzle : MonoBehaviour
         RandomizeItemPositions();
     }
 
-    // Update is called once per frame
     void Update()
     {
-        // Bisa tambah cheat key untuk re-shuffle misal tekan 'R'
         if (Input.GetKeyDown(KeyCode.R))
         {
             RandomizeItemPositions();
@@ -48,11 +54,7 @@ public class AtkPuzzle : MonoBehaviour
             return;
         }
 
-        // Hitung batas area
         Rect safeRect = safeArea.rect;
-        // Asumsi item child safeArea, jadi localPosition aman.
-        // Jika tidak, kita gunakan logic bounds yang sedikit lebih complex, 
-        // tapi untuk setup standard, ini cukup.
         
         float minX = safeRect.xMin * 0.9f; 
         float maxX = safeRect.xMax * 0.9f;
@@ -63,22 +65,16 @@ public class AtkPuzzle : MonoBehaviour
         {
             if (item == null) continue;
 
-            // Generate random anchored position
             float randomX = Random.Range(minX, maxX);
             float randomY = Random.Range(minY, maxY);
             
-            // Random Rotation
             float randomRot = Random.Range(-180f, 180f);
 
             RectTransform itemRect = item.GetComponent<RectTransform>();
             
-            // Reset state
             item.isSnapped = false;
             
-            // Set Position
             itemRect.anchoredPosition = new Vector2(randomX, randomY);
-            
-            // Set Rotation
             itemRect.localEulerAngles = new Vector3(0, 0, randomRot);
         }
     }
@@ -94,7 +90,6 @@ public class AtkPuzzle : MonoBehaviour
             }
         }
 
-        // Print progress kyk BookScript
         Debug.Log($"Progress: {snappedCount} / {allItems.Count} objects placed.");
 
         if (snappedCount >= allItems.Count)
@@ -105,11 +100,20 @@ public class AtkPuzzle : MonoBehaviour
                 winUI.SetActive(true);
             }
             
-            // Disable all draggables so they can't be moved after win
             foreach (var item in allItems)
             {
                 if (item != null) item.enabled = false;
             }
+        }
+    }
+
+    // 🔊 FUNCTION PLAY SFX (DITAMBAHKAN)
+    public void PlayDropSFX()
+    {
+        if (audioSource != null && dropSFX != null)
+        {
+            audioSource.pitch = Random.Range(0.95f, 1.05f);
+            audioSource.PlayOneShot(dropSFX);
         }
     }
 }

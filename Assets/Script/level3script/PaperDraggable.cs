@@ -75,6 +75,8 @@ public class PaperDraggable : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         // Visuals
         transform.SetAsLastSibling();
         transform.localScale = originalLocalScale * pickupScale;
+
+        FindObjectOfType<PaperPuzzle>()?.PlayDragSFX();
     }
 
     public void OnDrag(PointerEventData eventData)

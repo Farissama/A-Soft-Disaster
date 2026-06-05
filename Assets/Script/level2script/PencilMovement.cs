@@ -218,6 +218,8 @@ public class PencilMovement : MonoBehaviour, IDragHandler, IBeginDragHandler, IE
         {
             manager.CheckWinCondition();
         }
+
+        FindObjectOfType<PencilPuzzle>()?.PlayDropSFX();
     }
 
     public void SetInstantRotation(float z)
